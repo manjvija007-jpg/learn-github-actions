@@ -1,0 +1,58 @@
+name: CI Tracing Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  tracing-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install OpenTelemetry Collector
+        run: |
+          curl -sSL https://github.com/open-telemetry/opentelemetry-collector-releases/releases/download/v0.102.0/otelcol_0.102.0_linux_amd64.tar.gz | tar -xz
+          sudo mv otelcol /usr/local/bin/
+
+      - name: Add OpenTelemetry config
+        run: |
+          cat <<EOF > otel-config.yaml
+          receivers:
+            otlp:
+              protocols:
+                grpc:
+                http:
+          exporters:
+            logging:
+            jaeger:
+              endpoint: "http://localhost:14268/api/traces"
+          service:
+            pipelines:
+              traces:
+                receivers: [otlp]
+                exporters: [logging, jaeger]
+          EOF
+
+      - name: Run tests with tracing
+        run: |
+          otelcol --config otel-config.yaml &
+          npm test
+
+      - name: Upload traces
+        uses: actions/upload-artifact@v4
+        with:
+          name: traces
+          path: ./otel-logs/
