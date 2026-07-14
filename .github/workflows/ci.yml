@@ -1,0 +1,41 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build Docker image
+        run: |
+          docker build -t myapp:${{ github.sha }} .
+      
+      - name: Push to AWS ECR
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ap-south-1
+        run: |
+          aws ecr get-login-password --region $AWS_REGION | \
+          docker login --username AWS --password-stdin <your_account_id>.dkr.ecr.$AWS_REGION.amazonaws.com
+          docker tag myapp:${{ github.sha }} <your_account_id>.dkr.ecr.$AWS_REGION.amazonaws.com/myapp:${{ github.sha }}
+          docker push <your_account_id>.dkr.ecr.$AWS_REGION.amazonaws.com/myapp:${{ github.sha }}
