@@ -36,6 +36,6 @@ jobs:
           AWS_REGION: ap-south-1
         run: |
           aws ecr get-login-password --region $AWS_REGION | \
-          docker login --username AWS --password-stdin <your_account_id>.dkr.ecr.$AWS_REGION.amazonaws.com
-          docker tag myapp:${{ github.sha }} <your_account_id>.dkr.ecr.$AWS_REGION.amazonaws.com/myapp:${{ github.sha }}
-          docker push <your_account_id>.dkr.ecr.$AWS_REGION.amazonaws.com/myapp:${{ github.sha }}
+          docker login --username AWS --password-stdin 912096796564.dkr.ecr.$AWS_REGION.amazonaws.com
+          docker tag myapp:${{ github.sha }} 912096796564.dkr.ecr.$AWS_REGION.amazonaws.com/myapp:${{ github.sha }}
+          docker push 912096796564.dkr.ecr.$AWS_REGION.amazonaws.com/myapp:${{ github.sha }}
